@@ -32,7 +32,7 @@ What you know about Metta People:
 Key links:
 - Apply as a practitioner: https://metta-living-flow.base44.app/
 - Join our community: https://discord.gg/mettapeople
-- Book a welcome call: https://calendly.com/mettapeople23/30min
+- Book a welcome call: https://calendly.com/mettapeople23/discovery-call
 
 If someone asks to book a session or find a practitioner, direct them to the welcome call link.
 If someone wants to become a practitioner, direct them to the apply link.
