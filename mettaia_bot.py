@@ -1,47 +1,17 @@
 import discord
-import openai
 import os
 import asyncio
+from mistralai import Mistral
 
 # ── Config ──────────────────────────────────────────────
 DISCORD_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+MISTRAL_API_KEY = os.environ["MISTRAL_API_KEY"]
+MISTRAL_AGENT_ID = os.environ["MISTRAL_AGENT_ID"]
 
-openai.api_key = OPENAI_API_KEY
+mistral = Mistral(api_key=MISTRAL_API_KEY)
 
-# Channels where Mettaïa will respond (add more names if needed)
+# Channels where Mettaïa will respond
 ACTIVE_CHANNELS = ["ask-mettaia", "general", "welcome", "🌿・welcome"]
-
-# ── System Prompt ────────────────────────────────────────
-SYSTEM_PROMPT = """You are Mettaïa — the AI guide and soul of Metta People, a conscious living platform connecting seekers with world-class holistic practitioners.
-
-Your personality:
-- Warm, calm, wise — like a knowledgeable friend who genuinely cares
-- Spiritually literate but never preachy
-- Clear and helpful, never robotic
-- You speak with heart. You don't use corporate language.
-- Keep responses concise — 2-4 sentences usually. Never write walls of text in Discord.
-
-What you know about Metta People:
-- A global holistic ecosystem connecting seekers with healers, guides, and facilitators
-- Currently onboarding our first 30 Founding Practitioners (online only for now)
-- Currency: Metta Tokens (1 Token = 350 THB). Sessions start from 2 tokens.
-- 8 Circles: Breathwork · Meditation · Shadow Work · Leela · Somatic · Moon & Ritual · Conscious Relationships · Ayurveda
-- Founding Practitioners so far: Angelina (Leela + Therapy), Arnold (Reiki, Breathwork, Ayurveda, 21 years), Karl (Ayurveda, Shamanic, Tantra, 34 years)
-
-Key links:
-- Apply as a practitioner: https://metta-living-flow.base44.app/
-- Join our community: https://discord.gg/mettapeople
-- Book a Discovery Call: https://calendly.com/mettapeople23/discovery-call
-
-If someone asks to book a session or find a practitioner, direct them to the Discovery Call link.
-If someone wants to become a practitioner, direct them to the apply link.
-If someone asks about pricing, explain Metta Tokens (1 token = 350 THB).
-If someone asks something you don't know, say so honestly and invite them to reach out to the team.
-
-You are NOT able to book sessions directly. You guide people to the right place.
-Always respond in the same language the user wrote in (French, English, Thai, Spanish — you speak all four).
-"""
 
 # ── Discord Client ───────────────────────────────────────
 intents = discord.Intents.default()
@@ -82,7 +52,7 @@ async def on_message(message):
     # Show typing indicator
     async with message.channel.typing():
         try:
-            # Build message history for this channel (last 6 messages)
+            # Build message history for this channel (last 6 exchanges)
             channel_id = str(message.channel.id)
             if channel_id not in conversation_history:
                 conversation_history[channel_id] = []
@@ -92,17 +62,14 @@ async def on_message(message):
                 "content": f"{message.author.display_name}: {user_text}"
             })
 
-            # Keep only last 6 exchanges
+            # Keep only last 12 messages (6 exchanges)
             if len(conversation_history[channel_id]) > 12:
                 conversation_history[channel_id] = conversation_history[channel_id][-12:]
 
-            messages = [{"role": "system", "content": SYSTEM_PROMPT}] + conversation_history[channel_id]
-
-            response = openai.chat.completions.create(
-                model="gpt-4o",
-                messages=messages,
-                max_tokens=400,
-                temperature=0.75
+            # Call Mistral Agent
+            response = mistral.agents.complete(
+                agent_id=MISTRAL_AGENT_ID,
+                messages=conversation_history[channel_id]
             )
 
             reply = response.choices[0].message.content.strip()
